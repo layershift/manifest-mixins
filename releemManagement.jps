@@ -1,8 +1,7 @@
 actions:
   remove-releem-user:
     - cmd[${this.target}]: |-
-        bash -c "$(curl -sL https://releem.s3.amazonaws.com/v2/install.sh)"
-        uninstall >/dev/null || echo "FAILED_RELEEM_UNINSTALL"
+        bash -c "$(curl -sL https://releem.s3.amazonaws.com/v2/install.sh)" uninstall >/dev/null || echo "FAILED_RELEEM_UNINSTALL"
       user: root
       stdout: '${response.out}'
       script: |-
@@ -12,7 +11,7 @@ actions:
         return { result: 0 };
 
     - cmd[${this.target}]: |-
-        MYSQL_PWD="${settings.dbPass}" mysql -uroot -Nse "DROP USER IF EXISTS 'releem'@'%';" 2>/dev/null || echo "FAILED_RELEEM_USER_DELETION"
+        MYSQL_PWD="${this.rootPass}" mysql -uroot -Nse "DROP USER IF EXISTS 'releem'@'%';" 2>/dev/null || echo "FAILED_RELEEM_USER_DELETION"
       user: root
       stdout: '${response.out}'
       script: |-
@@ -22,6 +21,7 @@ actions:
         return { result: 0 };
 
     - script: |-
+        var licenseAppId = "${this.license}";
         var params = {
             nodeGroup: "${targetNodes.nodeGroup}",
             envName: "${env.name}",
@@ -29,7 +29,7 @@ actions:
         };
 
         var resp = api.dev.scripting.Eval(
-            "${globals.licenseManagerAppId}",
+            licenseAppId,
             session,
             "releem.server.delete",
             params
@@ -47,6 +47,7 @@ actions:
 
   sync-collaborators:
     - script: |-
+        var licenseAppId = "${this.license}";
         var params = {
           nodeGroup: "${targetNodes.nodeGroup}",
           envName: "${env.name}",
@@ -54,7 +55,7 @@ actions:
         };
 
         var resp = api.dev.scripting.Eval(
-          "${globals.licenseManagerAppId}",
+          licenseAppId,
           session,
           "releem.server.register",
           params
