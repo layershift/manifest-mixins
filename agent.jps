@@ -1,8 +1,7 @@
 actions:
   update-releem-agent:
-    - 'cmd[${targetNodes.nodeGroup}]': >-
-        /opt/releem/mysqlconfigurer.sh -u 2>/dev/null || echo
-        "FAILED_MYSQL_CONFIGURER"
+    - cmd[${targetNodes.nodeGroup}]: |-
+        /opt/releem/mysqlconfigurer.sh -u 2>/dev/null || echo "FAILED_MYSQL_CONFIGURER"
       user: root
       stdout: '${response.out}'
       script: |-
@@ -13,9 +12,9 @@ actions:
           };
         }
         return { 'result': 0 };
-    - 'cmd[${targetNodes.nodeGroup}]': >-
-        systemctl restart releem-agent 2>/dev/null || echo
-        "FAILED_RELEEM_RESTART"
+
+    - cmd[${targetNodes.nodeGroup}]: |-
+        systemctl restart releem-agent 2>/dev/null || echo "FAILED_RELEEM_RESTART"
       user: root
       stdout: '${response.out}'
       script: |-
@@ -24,10 +23,10 @@ actions:
         }
 
         return { result: 0 };
+
   restart-releem-agent:
-    - 'cmd[${targetNodes.nodeGroup}]': >-
-        systemctl restart releem-agent 2>/dev/null || echo
-        "FAILED_RELEEM_RESTART"
+    - cmd[${targetNodes.nodeGroup}]: |-
+        systemctl restart releem-agent 2>/dev/null || echo "FAILED_RELEEM_RESTART"
       user: root
       stdout: '${response.out}'
       script: |-
