@@ -1,0 +1,38 @@
+actions:
+  update-releem-agent:
+    - 'cmd[${targetNodes.nodeGroup}]': >-
+        /opt/releem/mysqlconfigurer.sh -u 2>/dev/null || echo
+        "FAILED_MYSQL_CONFIGURER"
+      user: root
+      stdout: '${response.out}'
+      script: |-
+        if (stdout == "FAILED_MYSQL_CONFIGURER") {
+          return {
+            'result': 'error',
+            'message': 'Releem agent failed to update! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!'
+          };
+        }
+        return { 'result': 0 };
+    - 'cmd[${targetNodes.nodeGroup}]': >-
+        systemctl restart releem-agent 2>/dev/null || echo
+        "FAILED_RELEEM_RESTART"
+      user: root
+      stdout: '${response.out}'
+      script: |-
+        if (stdout == "FAILED_RELEEM_RESTART") {
+          return { 'result': 'error', 'message': 'Failed to restart the Releem agent. Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+
+        return { result: 0 };
+  restart-releem-agent:
+    - 'cmd[${targetNodes.nodeGroup}]': >-
+        systemctl restart releem-agent 2>/dev/null || echo
+        "FAILED_RELEEM_RESTART"
+      user: root
+      stdout: '${response.out}'
+      script: |-
+        if (stdout == "FAILED_RELEEM_RESTART") {
+          return { 'result': 'error', 'message': 'Failed to restart the Releem agent. Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+
+        return { result: 0 };

@@ -1,0 +1,153 @@
+actions:
+  sync-collaborators:
+    - script: |-
+        var params = {
+          nodeGroup: "${targetNodes.nodeGroup}",
+          envName: "${env.name}",
+          action: "${this:}"
+        };
+
+        var resp = api.dev.scripting.Eval(
+          "${globals.licenseManagerAppId}",
+          session,
+          "releem.server.register",
+          params
+        );
+
+        if(resp.result != 0) {
+          return {
+            result: 'error',
+            message: 'Failed to register environment collaborators and owner to Releem! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!',
+          };
+        }
+
+        return {
+          result: 'success',
+          message: 'The environment owner and collaborators(if any) have been successfully registered. Please check your email for an invitation to the Releem dashboard.',
+        };
+  remove-releem-user:
+    - 'cmd[${this.target}]': >-
+        bash -c "$(curl -sL https://releem.s3.amazonaws.com/v2/install.sh)"
+        uninstall >/dev/null || echo "FAILED_RELEEM_UNINSTALL"
+      user: root
+      stdout: '${response.out}'
+      script: |-
+        if (stdout === "FAILED_RELEEM_UNINSTALL") {
+          return { 'result': 'error', 'message': 'Failed to remove the Releem agent from the server! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };
+    - 'cmd[${this.target}]': >-
+        MYSQL_PWD="${settings.dbPass}" mysql -uroot -Nse "DROP USER IF EXISTS
+        'releem'@'%';" 2>/dev/null || echo "FAILED_RELEEM_USER_DELETION"
+      user: root
+      stdout: '${response.out}'
+      script: |-
+        if (stdout === "FAILED_RELEEM_USER_DELETION") {
+          return { 'result': 'error', 'message': 'Failed to remove the Releem DB user from the server! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };
+    - script: |-
+        var params = {
+            nodeGroup: "${targetNodes.nodeGroup}",
+            envName: "${env.name}",
+            action: "${this:}"
+        };
+
+        var resp = api.dev.scripting.Eval(
+            "${globals.licenseManagerAppId}",
+            session,
+            "releem.server.delete",
+            params
+        );
+
+        if (resp.response.result != 0) {
+          return {
+            result: 'error',
+            message: 'Failed to delete server from Releem! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!',
+            response: resp
+          };
+        }
+
+        return { result: 0, response: resp };
+        
+  install-releem-mysql:
+    - cmd[${this.target}]: |-
+        MYSQL_PWD="${settings.dbPass}" mysql -uroot -e "exit" 2>/dev/null || echo "INVALID_CREDENTIALS"
+      user: root
+      stdout: ${response.out}
+      script: |-
+        if (stdout == "INVALID_CREDENTIALS") {
+          return { 'result': 'error', 'message': 'The provided credentials are invalid! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };
+            
+    - cmd[${this.target}]: |-
+        MYSQL_PWD="${settings.dbPass}" mysql -uroot -e "CREATE USER IF NOT EXISTS 'releem'@'%' IDENTIFIED BY '${globals.releemPassword}';" 2>/dev/null || echo "FAILED_TO_CREATE_USER"
+      user: root
+      stdout: ${response.out}
+      script: |-
+        if (stdout == "FAILED_TO_CREATE_USER") {
+          return { 'result': 'error', 'message': 'Failed to create releem MySQL user! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };
+
+    - cmd[${this.target}]: |-
+        MYSQL_PWD="${settings.dbPass}" mysql -uroot -e "GRANT PROCESS, REPLICATION CLIENT, SHOW VIEW ON *.* TO 'releem'@'%';" 2>/dev/null || echo "FAILED_PROCESS_GRANT"
+      user: root
+      stdout: ${response.out}
+      script: |-
+        if (stdout == "FAILED_PROCESS_GRANT") {
+          return { 'result': 'error', 'message': 'Failed to grant PROCESS, REPLICATION CLIENT, SHOW VIEW! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };
+
+    - cmd[${this.target}]: |-
+        MYSQL_PWD="${settings.dbPass}" mysql -uroot -e "GRANT SELECT ON performance_schema.events_statements_summary_by_digest TO 'releem'@'%';" 2>/dev/null || echo "FAILED_SELECT_GRANT"
+      user: root
+      stdout: ${response.out}
+      script: |-
+        if (stdout == "FAILED_SELECT_GRANT") {
+          return { 'result': 'error', 'message': 'Failed to grant SELECT on events_statements_summary_by_digest! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };
+
+    - cmd[${this.target}]: |-
+        MYSQL_PWD="${settings.dbPass}" mysql -uroot -e "GRANT SELECT ON performance_schema.table_io_waits_summary_by_index_usage TO 'releem'@'%';" 2>/dev/null || echo "FAILED_SELECT_GRANT"
+      user: root
+      stdout: ${response.out}
+      script: |-
+        if (stdout == "FAILED_SELECT_GRANT") { 
+          return { 'result': 'error', 'message': 'Failed to grant SELECT on table_io_waits_summary_by_index_usage! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };
+
+    - cmd[${this.target}]: |-
+        MYSQL_PWD="${settings.dbPass}" mysql -uroot -e "GRANT SELECT ON performance_schema.file_summary_by_instance TO 'releem'@'%';" 2>/dev/null || echo "FAILED_SELECT_GRANT"
+      user: root
+      stdout: ${response.out}
+      script: |-
+        if (stdout == "FAILED_SELECT_GRANT") {
+          return { result: 'error', 'message': 'Failed to grant SELECT on file_summary_by_instance! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };
+
+    - cmd[${this.target}]: |-
+        MYSQL_PWD="${settings.dbPass}" mysql -uroot -e "GRANT SELECT ON *.* TO 'releem'@'%';" 2>/dev/null || echo "FAILED_SELECT_GRANT"
+      user: root
+      stdout: ${response.out}
+      script: |-
+        if (stdout == "FAILED_SELECT_GRANT") {
+          return { 'result': 'error', 'message': 'Failed to grant permissions for automatic SQL query optimization! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };
+
+    - cmd[${this.target}]: |-
+        RELEEM_MYSQL_PASSWORD='${globals.releemPassword}' RELEEM_MYSQL_LOGIN='releem' RELEEM_MYSQL_MEMORY_LIMIT=0 RELEEM_API_KEY='${globals.releemRegistrationKey}' RELEEM_CRON_ENABLE=1 RELEEM_QUERY_OPTIMIZATION=true bash -c "$(curl -sL https://releem.s3.amazonaws.com/v2/install.sh)" > /dev/null || echo "FAILED_RELEEM_INSTALL"
+      user: root
+      stdout: ${response.out}
+      sayYes: true
+      script: |-
+        if (stdout == "FAILED_RELEEM_INSTALL") {
+          return { 'result': 'error', 'message': 'Releem agent failed to install on node ${response.nodeid}! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };

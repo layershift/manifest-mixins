@@ -1,0 +1,26 @@
+actions:
+  toggle-billing:
+    - script: |-
+        var billingAction = "${this.action}";
+
+        var params = {
+          nodeGroup: "${targetNodes.nodeGroup}",
+          envName: "${env.name}",
+          action: billingAction
+        };
+        var resp = api.dev.scripting.Eval(
+          "${globals.licenseManagerAppId}",
+          session,
+          "releem.billing.handler",
+          params
+        );
+        if (resp.response.result !== 0) {
+          return {
+            result: 'error',
+            message: 'Failed to ' + billingAction + ' billing! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!',
+            response: resp.response.output,
+            options: resp.response.options
+          };
+        }
+
+        return { result: 0, response: resp };
