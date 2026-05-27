@@ -65,14 +65,14 @@ actions:
           return {
             result: 'error',
             message: 'Failed to register environment collaborators and owner to Releem! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!',
-            response: resp
+            response: resp.responses.userResponses
           };
         }
         
         return {
           result: 'success',
           message: 'The environment owner and collaborators(if any) have been successfully registered. Please check your email for an invitation to the Releem dashboard.',
-          response: resp
+          response: resp.responses.userResponses
         };
 
   install-releem-mysql:
