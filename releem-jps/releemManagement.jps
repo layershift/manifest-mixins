@@ -65,6 +65,7 @@ actions:
           return {
             result: 'error',
             message: 'Failed to register environment collaborators and owner to Releem! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!',
+            response: resp
           };
         }
         
