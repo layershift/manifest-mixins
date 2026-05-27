@@ -72,7 +72,7 @@ actions:
         return {
           result: 'success',
           message: 'The environment owner and collaborators(if any) have been successfully registered. Please check your email for an invitation to the Releem dashboard.',
-          response: resp.userResponses
+          response: resp
         };
 
   install-releem-mysql:
