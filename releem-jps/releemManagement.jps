@@ -1,28 +1,9 @@
 actions:
-  remove-releem-user:
-    - cmd[${this.target}]: |-
-        bash -c "$(curl -sL https://releem.s3.amazonaws.com/v2/install.sh)" uninstall >/dev/null || echo "FAILED_RELEEM_UNINSTALL"
-      user: root
-      stdout: '${response.out}'
-      script: |-
-        if (stdout === "FAILED_RELEEM_UNINSTALL") {
-          return { 'result': 'error', 'message': 'Failed to remove the Releem agent from the server! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
-        }
-        return { result: 0 };
-
-    - cmd[${this.target}]: |-
-        MYSQL_PWD="${this.rootPass}" mysql -uroot -Nse "DROP USER IF EXISTS 'releem'@'%';" 2>/dev/null || echo "FAILED_RELEEM_USER_DELETION"
-      user: root
-      stdout: '${response.out}'
-      script: |-
-        if (stdout === "FAILED_RELEEM_USER_DELETION") {
-          return { 'result': 'error', 'message': 'Failed to remove the Releem DB user from the server! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
-        }
-        return { result: 0 };
-
+  remove-server-from-releem:
     - script: |-
         var licenseAppId = "${this.license}";
         var nodeGroup = "${this.nodeGroup}";
+
         var params = {
             nodeGroup: nodeGroup,
             envName: "${env.name}",
@@ -44,7 +25,32 @@ actions:
           };
         }
 
-        return { result: 0, response: resp };
+        return {
+          result: 'success',
+          message: 'Successfully unregistered the database node from the Releem dashboard!',
+          response: resp.response.userResponses || resp
+        };
+
+  remove-releem-user:
+    - cmd[${this.target}]: |-
+        bash -c "$(curl -sL https://releem.s3.amazonaws.com/v2/install.sh)" uninstall >/dev/null || echo "FAILED_RELEEM_UNINSTALL"
+      user: root
+      stdout: '${response.out}'
+      script: |-
+        if (stdout === "FAILED_RELEEM_UNINSTALL") {
+          return { 'result': 'error', 'message': 'Failed to remove the Releem agent from the server! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };
+
+    - cmd[${this.target}]: |-
+        MYSQL_PWD="${this.rootPass}" mysql -uroot -Nse "DROP USER IF EXISTS 'releem'@'%';" 2>/dev/null || echo "FAILED_RELEEM_USER_DELETION"
+      user: root
+      stdout: '${response.out}'
+      script: |-
+        if (stdout === "FAILED_RELEEM_USER_DELETION") {
+          return { 'result': 'error', 'message': 'Failed to remove the Releem DB user from the server! Please [HOSTER_SUPPORT]contact us[/HOSTER_SUPPORT] in order to further investigate the problem!' };
+        }
+        return { result: 0 };
 
   sync-collaborators:
     - script: |-
