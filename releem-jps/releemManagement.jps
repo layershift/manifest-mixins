@@ -22,8 +22,9 @@ actions:
 
     - script: |-
         var licenseAppId = "${this.license}";
+        var nodeGroup = "${this.nodeGroup}";
         var params = {
-            nodeGroup: "${targetNodes.nodeGroup}",
+            nodeGroup: nodeGroup,
             envName: "${env.name}",
             action: "${this:}"
         };
