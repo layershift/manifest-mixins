@@ -3,9 +3,11 @@ actions:
     - script: |-
         var licenseAppId = "${this.license}";
         var nodeGroup = "${this.nodeGroup}";
+        var nodeHostnames = '${this.nodeHostnames}';
 
         var params = {
             nodeGroup: nodeGroup,
+            nodeHostnames: nodeHostnames,
             envName: "${env.name}",
             action: "${this:}"
         };
