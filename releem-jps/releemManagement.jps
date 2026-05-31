@@ -31,8 +31,9 @@ actions:
         return {
           result: 0,
           message: 'Successfully unregistered the database node from the Releem dashboard!',
-          response: resp.response.userResponses || resp
+          response: resp
         };
+
 
   remove-releem-user:
     - cmd[${this.target}]: |-
