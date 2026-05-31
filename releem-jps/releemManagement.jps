@@ -4,11 +4,12 @@ actions:
         var licenseAppId = "${this.license}";
         var nodeGroup = "${this.nodeGroup}";
         var nodeHostnames = '${this.nodeHostnames}';
+        var envName = "${this.envName}";
 
         var params = {
             nodeGroup: nodeGroup,
             nodeHostnames: nodeHostnames,
-            envName: "${env.name}",
+            envName: envName,
             action: "${this:}"
         };
 
@@ -28,7 +29,7 @@ actions:
         }
 
         return {
-          result: 'success',
+          result: 0,
           message: 'Successfully unregistered the database node from the Releem dashboard!',
           response: resp.response.userResponses || resp
         };
